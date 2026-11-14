@@ -1,0 +1,1121 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Blade of the Night — Enhanced Edition</title>
+<style>
+  :root {
+    color-scheme: dark;
+    --ink: #e8f3ff;
+    --panel: #071326;
+    --line: #284b77;
+    --cyan: #55c9ff;
+    --gold: #ffcf5c;
+    --crimson: #ff477a;
+  }
+  * { box-sizing: border-box; user-select: none; -webkit-user-select: none; }
+  body {
+    margin: 0;
+    background: #030813;
+    color: var(--ink);
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    overflow-x: hidden;
+  }
+  main { max-width: 1120px; margin: auto; padding: 14px; }
+  header {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  h1 {
+    margin: 0;
+    font-size: clamp(22px, 3.8vw, 36px);
+    letter-spacing: 1px;
+    text-shadow: 0 0 18px rgba(85, 201, 255, 0.35);
+  }
+  .sub { color: #a9c5e8; font-size: 14px; margin-top: 2px; }
+  .header-actions { display: flex; gap: 8px; align-items: center; }
+
+  .hud {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    margin: 10px 0;
+  }
+  .pill {
+    background: #0a1930;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 7px 11px;
+    font-size: 13.5px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .pill.combo { border-color: #ff9c42; color: #ffd48a; background: #1e1510; }
+  .pill.stamina { border-color: #36b9df; }
+
+  button {
+    background: #12345a;
+    color: white;
+    border: 1px solid #4779b2;
+    border-radius: 8px;
+    padding: 8px 13px;
+    font-weight: 700;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.08s;
+  }
+  button:hover:not(:disabled) { background: #1c4e80; }
+  button:active:not(:disabled) { transform: translateY(1px); }
+  button:disabled { opacity: 0.42; cursor: not-allowed; }
+  button.secondary { background: #0d223d; border-color: #2f5582; }
+
+  .wrap {
+    position: relative;
+    border: 2px solid #315a8d;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #030813;
+    box-shadow: 0 0 32px #12315b77;
+  }
+  canvas {
+    display: block;
+    width: 100%;
+    height: auto;
+    image-rendering: pixelated;
+    outline: none;
+  }
+
+  #message {
+    min-height: 24px;
+    color: #8ee8ff;
+    font-size: 14px;
+    font-weight: 500;
+    margin: 8px 2px;
+  }
+
+  .bottom {
+    display: grid;
+    grid-template-columns: 1.2fr 1.3fr;
+    gap: 12px;
+    margin-top: 8px;
+  }
+  .panel {
+    background: #071326;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 13px;
+  }
+  .panel h2 { font-size: 16px; margin: 0 0 8px; color: #d6ebff; }
+  .small { font-size: 13px; color: #b8cce5; line-height: 1.55; }
+  .shop {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .shop button { text-align: left; padding: 8px 10px; font-size: 12.5px; }
+  kbd {
+    background: #14243b;
+    border: 1px solid #446286;
+    border-radius: 4px;
+    padding: 1px 5px;
+    color: #fff;
+    font-size: 12px;
+  }
+
+  /* Touch Controls for Mobile / Tablet */
+  .touch-controls {
+    display: none;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+    gap: 10px;
+  }
+  .touch-group { display: flex; gap: 10px; }
+  .t-btn {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    font-size: 18px;
+    display: grid;
+    place-items: center;
+    background: rgba(18, 52, 90, 0.85);
+    border: 2px solid #55c9ff;
+    touch-action: manipulation;
+  }
+  .t-btn.atk { border-color: #ff648c; background: rgba(90, 22, 46, 0.85); }
+  .t-btn.dash { border-color: #ffd166; background: rgba(84, 62, 18, 0.85); }
+
+  @media (max-width: 780px) {
+    .bottom { grid-template-columns: 1fr; }
+    .touch-controls { display: flex; }
+  }
+  @media (max-width: 520px) {
+    .shop { grid-template-columns: 1fr; }
+    .pill { font-size: 12px; padding: 5px 8px; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div>
+      <h1>⚔ BLADE OF THE NIGHT</h1>
+      <div class="sub">Moonlit Pixel-Art Demon-Hunting Adventure • Enhanced Edition</div>
+    </div>
+    <div class="header-actions">
+      <button id="soundBtn" class="secondary" title="Toggle WebAudio Sound Effects">🔊 SFX: ON</button>
+      <button id="pauseBtn" class="secondary">⏸ Pause (P)</button>
+      <button id="restart">↻ Restart</button>
+    </div>
+  </header>
+
+  <div class="hud">
+    <div class="pill" id="hp">❤️ HP: 20 / 20</div>
+    <div class="pill stamina" id="stamina">⚡ Dash: READY</div>
+    <div class="pill" id="coins">🪙 Coins: 0</div>
+    <div class="pill" id="stage">🌙 Forest Path · 1/4</div>
+    <div class="pill" id="objective">Defeat the demons</div>
+    <div class="pill combo" id="combo" style="display:none;">🔥 0x Combo</div>
+  </div>
+
+  <div class="wrap">
+    <canvas id="game" width="960" height="540" tabindex="0" aria-label="Blade of the Night game canvas"></canvas>
+  </div>
+
+  <!-- On-screen Mobile Controls -->
+  <div class="touch-controls" aria-label="Mobile touch controls">
+    <div class="touch-group">
+      <button class="t-btn" id="tLeft">◀</button>
+      <button class="t-btn" id="tRight">▶</button>
+    </div>
+    <div class="touch-group">
+      <button class="t-btn dash" id="tDash">⚡</button>
+      <button class="t-btn" id="tJump">▲</button>
+      <button class="t-btn atk" id="tSlash">⚔</button>
+    </div>
+  </div>
+
+  <div id="message">Explore the night. Reach the blue checkpoint, then defeat the boss!</div>
+
+  <div class="bottom">
+    <section class="panel">
+      <h2>Controls & Mechanics</h2>
+      <div class="small">
+        <kbd>←</kbd> <kbd>→</kbd> / <kbd>A</kbd> <kbd>D</kbd> Move &nbsp;·&nbsp;
+        <kbd>↑</kbd> / <kbd>W</kbd> / <kbd>Space</kbd> Double Jump<br>
+        <kbd>E</kbd> / <kbd>J</kbd> 3-Hit Water Breathing Combo &nbsp;·&nbsp;
+        <kbd>Z</kbd> / <kbd>Shift</kbd> Shadow Dash &nbsp;·&nbsp;
+        <kbd>P</kbd> Pause<br><br>
+        • <b>Checkpoints</b> now actually revive you at the lantern if you fall!<br>
+        • <b>Floating orbs</b> drop from defeated demons to restore HP &amp; bonus coins.
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Demon Slayer Upgrade Shop</h2>
+      <div class="small">Spend coins earned from demons &amp; bosses anytime during your run:</div>
+      <div class="shop">
+        <button id="healBtn">🧪 Heal +15 HP (25 🪙)</button>
+        <button id="healthUp">❤️ +10 Max HP (50 🪙)</button>
+        <button id="damageUp">⚔ +2 Sword DMG (50 🪙)</button>
+        <button id="speedUp">👟 +Agility &amp; Dash (50 🪙)</button>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script>
+(() => {
+  const c = document.getElementById('game');
+  const ctx = c.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+
+  const W = c.width, H = c.height, ground = 432;
+  const keys = {};
+  let soundOn = true;
+  let paused = false;
+
+  // --- Lightweight WebAudio Retro Synthesizer (No external audio files needed) ---
+  const AudioCtx = window.AudioContext || window.webkitAudioContext;
+  let actx = null;
+  function playTone(freq, type = 'sine', dur = 0.12, vol = 0.08, slide = 0) {
+    if (!soundOn) return;
+    try {
+      if (!actx) actx = new AudioCtx();
+      if (actx.state === 'suspended') actx.resume();
+      const osc = actx.createOscillator();
+      const gain = actx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, actx.currentTime);
+      if (slide) osc.frequency.exponentialRampToValueAtTime(Math.max(40, freq + slide), actx.currentTime + dur);
+      gain.gain.setValueAtTime(vol, actx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + dur);
+      osc.connect(gain);
+      gain.connect(actx.destination);
+      osc.start();
+      osc.stop(actx.currentTime + dur);
+    } catch (_) {}
+  }
+
+  const sfx = {
+    slash: (comboStep) => playTone(320 + comboStep * 90, 'sawtooth', 0.11, 0.07, -180),
+    hit: () => playTone(150, 'square', 0.09, 0.08, -70),
+    jump: () => playTone(260, 'triangle', 0.14, 0.07, 220),
+    dash: () => playTone(480, 'sine', 0.15, 0.07, -300),
+    coin: () => { playTone(880, 'sine', 0.08, 0.06); setTimeout(() => playTone(1180, 'sine', 0.12, 0.06), 60); },
+    hurt: () => playTone(110, 'sawtooth', 0.22, 0.11, -55),
+    checkpoint: () => { playTone(523, 'triangle', 0.1, 0.07); setTimeout(() => playTone(659, 'triangle', 0.1, 0.07), 90); setTimeout(() => playTone(784, 'triangle', 0.18, 0.08), 180); },
+    win: () => [523, 659, 784, 1046].forEach((f, i) => setTimeout(() => playTone(f, 'triangle', 0.22, 0.08), i * 110))
+  };
+
+  const stages = [
+    { name: 'Forest Path', sky: '#07152e', moon: '#d6e8ff', trees: '#102d49', ground: '#182d3c', accent: '#4bd5ff', boss: 'Hand Demon' },
+    { name: 'Mountain Village', sky: '#100f30', moon: '#d9d5ff', trees: '#30234c', ground: '#30213b', accent: '#ff70bd', boss: 'Spider Demon' },
+    { name: 'Snowy Temple', sky: '#101e3e', moon: '#e6f4ff', trees: '#213d60', ground: '#263d52', accent: '#7ce7ff', boss: 'Blood Moon Demon' },
+    { name: 'Blood Moon Castle', sky: '#210d27', moon: '#ffb6d3', trees: '#45172f', ground: '#321b31', accent: '#ff4b77', boss: 'Final Demon King' }
+  ];
+
+  let player, enemies, boss, coins, stage, checkpointSaved, gameOver, won, camera;
+  let slashTimer, dashTimer, dashCooldown, jumpsLeft, lastTime, particles, floatingTexts, pickups, friends, rewardClaimed;
+  let comboCount, comboTimer, comboStep, shakeTimer, hitStop;
+
+  function reset() {
+    player = {
+      x: 70, y: ground - 42, w: 25, h: 42,
+      vx: 0, vy: 0, hp: 20, maxHp: 20,
+      damage: 2, speed: 3.4, facing: 1, invuln: 0
+    };
+    enemies = [];
+    pickups = [];
+    floatingTexts = [];
+    particles = [];
+    coins = 0;
+    stage = 0;
+    checkpointSaved = false;
+    gameOver = false;
+    won = false;
+    paused = false;
+    camera = 0;
+    slashTimer = 0;
+    dashTimer = 0;
+    dashCooldown = 0;
+    jumpsLeft = 2;
+    comboCount = 0;
+    comboTimer = 0;
+    comboStep = 0;
+    shakeTimer = 0;
+    hitStop = 0;
+    rewardClaimed = [false, false, false, false];
+    friends = [
+      { x: player.x - 28, color: '#e48acb', cool: 0 },
+      { x: player.x - 48, color: '#ffad4c', cool: 0 }
+    ];
+    document.getElementById('pauseBtn').textContent = '⏸ Pause (P)';
+    loadStage();
+    updateHUD();
+    say('Explore the night. Reach the blue checkpoint lantern, then defeat the boss!');
+  }
+
+  function loadStage() {
+    enemies = [];
+    pickups = [];
+    checkpointSaved = false;
+    const count = [5, 6, 7, 5][stage];
+    for (let i = 0; i < count; i++) {
+      const isFast = stage >= 1 && i % 2 === 1;
+      enemies.push({
+        x: 290 + i * 125 + Math.random() * 25,
+        y: ground - 34,
+        w: 27,
+        h: 34,
+        hp: (isFast ? 7 : 9) + stage * 2,
+        max: (isFast ? 7 : 9) + stage * 2,
+        damage: 1 + Math.floor(stage / 2),
+        speed: isFast ? 0.85 : 0.55,
+        jump: false,
+        vy: 0,
+        cool: 40 + Math.random() * 60,
+        alive: true,
+        kind: isFast ? 'swift' : 'normal',
+        flash: 0
+      });
+    }
+    boss = {
+      x: stage === 0 ? 810 : 870,
+      y: ground - 68,
+      w: 48,
+      h: 68,
+      hp: [24, 40, 56, 72][stage],
+      max: [24, 40, 56, 72][stage],
+      damage: [2, 3, 4, 5][stage],
+      cool: 85,
+      alive: true,
+      kind: 'boss',
+      attack: 0,
+      telegraph: 0,
+      flash: 0
+    };
+  }
+
+  function say(t) {
+    document.getElementById('message').textContent = t;
+  }
+
+  function addFloatText(x, y, text, color = '#fff') {
+    floatingTexts.push({ x, y, text, color, life: 42 });
+  }
+
+  function spawnPickup(x, y, type) {
+    pickups.push({
+      x, y: y - 10,
+      vy: -4.2,
+      type, // 'coin' or 'heart'
+      life: 600
+    });
+  }
+
+  function updateHUD() {
+    document.getElementById('hp').textContent = `❤️ HP: ${Math.max(0, Math.ceil(player.hp))} / ${player.maxHp}`;
+    document.getElementById('coins').textContent = `🪙 Coins: ${coins}`;
+    document.getElementById('stage').textContent = `🌙 ${stages[stage].name} · ${stage + 1}/4`;
+    document.getElementById('objective').textContent = won
+      ? 'Night saved!'
+      : gameOver
+      ? 'Hunter fallen'
+      : boss?.alive
+      ? `${stages[stage].boss}: ${Math.ceil(boss.hp)} HP`
+      : 'Path cleared → Move right';
+
+    const stamEl = document.getElementById('stamina');
+    if (dashCooldown <= 0) {
+      stamEl.textContent = '⚡ Dash: READY';
+      stamEl.style.color = '#8ef5ff';
+    } else {
+      stamEl.textContent = `⚡ Dash: ${Math.ceil((dashCooldown / 55) * 100)}%`;
+      stamEl.style.color = '#7e9bb8';
+    }
+
+    const comboEl = document.getElementById('combo');
+    if (comboCount > 1 && comboTimer > 0) {
+      comboEl.style.display = 'flex';
+      comboEl.textContent = `🔥 ${comboCount}x Combo`;
+    } else {
+      comboEl.style.display = 'none';
+    }
+
+    document.getElementById('healBtn').disabled = coins < 25 || player.hp >= player.maxHp || won || gameOver;
+    ['healthUp', 'damageUp', 'speedUp'].forEach(id => {
+      document.getElementById(id).disabled = coins < 50 || won || gameOver;
+    });
+  }
+
+  function upgrade(type) {
+    if (gameOver || won) return;
+    if (type === 'heal') {
+      if (coins < 25 || player.hp >= player.maxHp) return;
+      coins -= 25;
+      const healed = Math.min(15, player.maxHp - player.hp);
+      player.hp += healed;
+      sfx.checkpoint();
+      addFloatText(player.x, player.y - 12, `+${Math.ceil(healed)} HP`, '#7dffb3');
+      say(`Drank healing elixir (+${Math.ceil(healed)} HP)!`);
+      updateHUD();
+      return;
+    }
+    if (coins < 50) return;
+    coins -= 50;
+    sfx.checkpoint();
+    if (type === 'health') {
+      player.maxHp += 10;
+      player.hp = Math.min(player.maxHp, player.hp + 10);
+      addFloatText(player.x, player.y - 12, 'MAX HP +10', '#ff8aa8');
+      say('Upgrade: +10 Max HP!');
+    }
+    if (type === 'damage') {
+      player.damage += 2;
+      addFloatText(player.x, player.y - 12, 'SWORD +2', '#70e4ff');
+      say(`Nichirin blade reforged! Base damage is now ${player.damage}.`);
+    }
+    if (type === 'speed') {
+      player.speed += 0.65;
+      addFloatText(player.x, player.y - 12, 'AGILITY UP', '#ffd166');
+      say('Footwork sharpened! Movement & dash recovery improved.');
+    }
+    updateHUD();
+  }
+
+  document.getElementById('healBtn').onclick = () => upgrade('heal');
+  document.getElementById('healthUp').onclick = () => upgrade('health');
+  document.getElementById('damageUp').onclick = () => upgrade('damage');
+  document.getElementById('speedUp').onclick = () => upgrade('speed');
+  document.getElementById('restart').onclick = reset;
+
+  document.getElementById('soundBtn').onclick = () => {
+    soundOn = !soundOn;
+    document.getElementById('soundBtn').textContent = soundOn ? '🔊 SFX: ON' : '🔇 SFX: OFF';
+  };
+
+  function togglePause() {
+    if (gameOver || won) return;
+    paused = !paused;
+    document.getElementById('pauseBtn').textContent = paused ? '▶ Resume (P)' : '⏸ Pause (P)';
+  }
+  document.getElementById('pauseBtn').onclick = togglePause;
+
+  function triggerJump() {
+    if (paused || gameOver || won) return;
+    if (jumpsLeft > 0) {
+      const isDouble = jumpsLeft === 1;
+      player.vy = isDouble ? -9.5 : -10.6;
+      jumpsLeft--;
+      sfx.jump();
+      puff(player.x + 12, player.y + player.h, isDouble ? '#c5f4ff' : '#8fdcff', isDouble ? 9 : 6);
+    }
+  }
+
+  function triggerSlash() {
+    if (paused || gameOver || won || slashTimer > 0) return;
+    comboStep = (comboStep % 3) + 1;
+    slashTimer = comboStep === 3 ? 20 : 15;
+    sfx.slash(comboStep);
+    attack(comboStep === 3);
+  }
+
+  function triggerDash() {
+    if (paused || gameOver || won || dashTimer > 0 || dashCooldown > 0) return;
+    dashTimer = 11;
+    dashCooldown = Math.max(28, 55 - Math.round((player.speed - 3.4) * 8));
+    player.invuln = Math.max(player.invuln, 14);
+    player.vx = player.facing * 11.5;
+    player.vy = 0;
+    sfx.dash();
+    puff(player.x + 10, player.y + 20, '#64dfff', 12);
+  }
+
+  window.addEventListener('keydown', e => {
+    if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Space'].includes(e.code)) e.preventDefault();
+    keys[e.code] = true;
+    if (e.code === 'KeyP' && !e.repeat) togglePause();
+    if ((e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW') && !e.repeat) triggerJump();
+    if ((e.code === 'KeyE' || e.code === 'KeyJ') && !e.repeat) triggerSlash();
+    if ((e.code === 'KeyZ' || e.code === 'ShiftLeft' || e.code === 'ShiftRight') && !e.repeat) triggerDash();
+    if (e.code === 'Enter' && (gameOver || won)) reset();
+  });
+  window.addEventListener('keyup', e => { keys[e.code] = false; });
+
+  // Touch bindings
+  const bindTouch = (id, onDown, onUp) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('pointerdown', e => { e.preventDefault(); onDown(); });
+    if (onUp) {
+      el.addEventListener('pointerup', e => { e.preventDefault(); onUp(); });
+      el.addEventListener('pointerleave', e => { e.preventDefault(); onUp(); });
+    }
+  };
+  bindTouch('tLeft', () => { keys.ArrowLeft = true; }, () => { keys.ArrowLeft = false; });
+  bindTouch('tRight', () => { keys.ArrowRight = true; }, () => { keys.ArrowRight = false; });
+  bindTouch('tJump', triggerJump);
+  bindTouch('tSlash', triggerSlash);
+  bindTouch('tDash', triggerDash);
+
+  function attack(isFinisher) {
+    const reach = isFinisher ? 66 : 54;
+    const px = player.x + player.w / 2 + player.facing * (isFinisher ? 34 : 28);
+    let landed = false;
+
+    for (const e of [...enemies, boss].filter(Boolean)) {
+      if (!e.alive) continue;
+      const dx = (e.x + e.w / 2) - px;
+      const dy = (e.y + e.h / 2) - (player.y + player.h / 2);
+      if (Math.abs(dx) < reach && Math.abs(dy) < 62) {
+        const dmg = isFinisher ? player.damage + 2 : player.damage;
+        e.hp -= dmg;
+        e.flash = 6;
+        // Knockback regular enemies slightly
+        if (e.kind !== 'boss') e.x += player.facing * (isFinisher ? 18 : 9);
+        landed = true;
+        sfx.hit();
+        puff(e.x + e.w / 2, e.y + e.h / 2, isFinisher ? '#55e6ff' : '#ff648c', isFinisher ? 12 : 7);
+        addFloatText(e.x + e.w / 2, e.y - 6, `-${dmg}${isFinisher ? '!' : ''}`, isFinisher ? '#6beeff' : '#ffd166');
+
+        if (e.hp <= 0) {
+          e.alive = false;
+          if (e.kind === 'boss') {
+            bossDefeated();
+          } else {
+            coins += 5;
+            spawnPickup(e.x + e.w / 2, e.y + 10, Math.random() < 0.28 ? 'heart' : 'coin');
+            say('Demon slain! +5 coins.');
+          }
+        }
+      }
+    }
+
+    if (landed) {
+      comboCount++;
+      comboTimer = 140;
+      hitStop = isFinisher ? 3 : 1.5;
+      if (isFinisher) shakeTimer = 6;
+    }
+
+    // Friends assist
+    friends.forEach(f => {
+      if (f.cool <= 0) {
+        const target = [...enemies, boss].find(e => e && e.alive && Math.abs(e.x - player.x) < 190);
+        if (target) {
+          const allyDmg = 1 + Math.floor(stage / 2);
+          target.hp -= allyDmg;
+          target.flash = 4;
+          f.cool = 65;
+          puff(target.x + 10, target.y + 14, f.color, 4);
+          addFloatText(target.x, target.y - 16, `-${allyDmg}`, f.color);
+          if (target.hp <= 0) {
+            target.alive = false;
+            if (target.kind === 'boss') bossDefeated();
+            else coins += 5;
+          }
+        }
+      }
+    });
+
+    updateHUD();
+  }
+
+  function bossDefeated() {
+    if (!rewardClaimed[stage]) {
+      coins += 50;
+      rewardClaimed[stage] = true;
+    }
+    boss.alive = false;
+    shakeTimer = 14;
+    sfx.win();
+    for (let i = 0; i < 28; i++) puff(boss.x + boss.w / 2, boss.y + boss.h / 2, stages[stage].accent, 1);
+
+    if (stage === 3) {
+      won = true;
+      say('The Demon King falls. Dawn returns to the land! You won! Press Enter to play again.');
+    } else {
+      say(`${stages[stage].boss} defeated! +50 coins. Upgrade in the shop or walk right to the next stage.`);
+    }
+    updateHUD();
+  }
+
+  function hurt(dmg) {
+    if (player.invuln > 0 || gameOver || won) return;
+    player.hp -= dmg;
+    player.invuln = 55;
+    comboCount = 0;
+    shakeTimer = 8;
+    sfx.hurt();
+    puff(player.x + 12, player.y + 20, '#ff3e66', 11);
+    addFloatText(player.x + 10, player.y - 8, `-${dmg}`, '#ff4d6d');
+
+    if (player.hp <= 0) {
+      if (checkpointSaved) {
+        // Actual working checkpoint revival!
+        checkpointSaved = false;
+        player.hp = Math.ceil(player.maxHp * 0.65);
+        player.x = 160;
+        player.y = ground - player.h;
+        player.vx = 0;
+        player.vy = 0;
+        player.invuln = 90;
+        sfx.checkpoint();
+        puff(160, ground - 24, '#4bd5ff', 18);
+        say('Blue Lantern revived you at the checkpoint with 65% HP!');
+      } else {
+        player.hp = 0;
+        gameOver = true;
+        say('You were overwhelmed. Press Enter or Restart to try again.');
+      }
+    }
+    updateHUD();
+  }
+
+  function puff(x, y, color, n) {
+    for (let i = 0; i < n; i++) {
+      particles.push({
+        x, y,
+        vx: (Math.random() - 0.5) * 5.2,
+        vy: (Math.random() - 0.75) * 5.2,
+        life: 18 + Math.random() * 14,
+        color
+      });
+    }
+  }
+
+  function update(dt) {
+    if (paused || gameOver || won) return;
+    if (hitStop > 0) {
+      hitStop -= dt / 16.67;
+      return;
+    }
+
+    const step = Math.min(2, dt / 16.67);
+
+    // Movement
+    const left = keys.ArrowLeft || keys.KeyA;
+    const right = keys.ArrowRight || keys.KeyD;
+    if (dashTimer <= 0) {
+      if (left) { player.vx = -player.speed; player.facing = -1; }
+      else if (right) { player.vx = player.speed; player.facing = 1; }
+      else { player.vx *= 0.72; }
+    }
+
+    if (dashTimer > 0) dashTimer -= step;
+    if (dashCooldown > 0) dashCooldown = Math.max(0, dashCooldown - step);
+    if (slashTimer > 0) slashTimer -= step;
+    if (player.invuln > 0) player.invuln -= step;
+    if (shakeTimer > 0) shakeTimer -= step;
+    if (comboTimer > 0) {
+      comboTimer -= step;
+      if (comboTimer <= 0) comboCount = 0;
+    }
+
+    player.x += player.vx * step;
+    player.x = Math.max(0, Math.min(930, player.x));
+    player.vy += 0.48 * step;
+    player.y += player.vy * step;
+
+    if (player.y + player.h >= ground) {
+      player.y = ground - player.h;
+      player.vy = 0;
+      jumpsLeft = 2;
+    }
+
+    camera = Math.max(0, Math.min(420, player.x - 280));
+
+    // Friends AI
+    friends.forEach((f, idx) => {
+      const targetX = player.x - (34 + idx * 22) * player.facing;
+      f.x += (targetX - f.x) * 0.08 * step;
+      f.cool = Math.max(0, f.cool - step);
+    });
+
+    // Enemies AI
+    for (const e of enemies) {
+      if (!e.alive) continue;
+      if (e.flash > 0) e.flash -= step;
+      const dist = player.x - e.x;
+      if (Math.abs(dist) < 290) {
+        e.x += Math.sign(dist) * e.speed * step;
+        if (e.cool > 0) e.cool -= step;
+        else {
+          e.cool = 70 + Math.random() * 40;
+          if (Math.random() < 0.35 && !e.jump) {
+            e.vy = -7.6;
+            e.jump = true;
+          } else if (Math.abs(dist) < 48) {
+            hurt(e.damage);
+          }
+        }
+      }
+      if (e.jump) {
+        e.vy += 0.45 * step;
+        e.y += e.vy * step;
+        if (e.y >= ground - e.h) {
+          e.y = ground - e.h;
+          e.jump = false;
+          e.vy = 0;
+          if (Math.abs(player.x - e.x) < 48) hurt(e.damage + 1);
+        }
+      }
+      if (Math.abs(player.x - e.x) < 26 && Math.abs(player.y - e.y) < 30 && e.cool % 38 < 2) {
+        hurt(e.damage);
+      }
+    }
+
+    // Boss AI with visual telegraphing
+    if (boss?.alive) {
+      if (boss.flash > 0) boss.flash -= step;
+      boss.cool -= step;
+      const d = player.x - boss.x;
+      if (Math.abs(d) < 380 && boss.telegraph <= 0) {
+        boss.x += Math.sign(d) * 0.38 * step;
+      }
+      if (boss.cool <= 22 && boss.cool > 0) {
+        boss.telegraph = boss.cool;
+      } else {
+        boss.telegraph = 0;
+      }
+
+      if (boss.cool <= 0) {
+        boss.cool = [98, 82, 68, 58][stage];
+        boss.attack = (boss.attack + 1) % 3;
+        if (boss.attack === 0) {
+          // Lunge slash
+          boss.x += Math.sign(d) * 72;
+          boss.x = Math.max(200, Math.min(900, boss.x));
+          if (Math.abs(player.x - boss.x) < 78) hurt(boss.damage);
+        } else if (boss.attack === 1) {
+          // Ground shockwave (jumpable!)
+          puff(boss.x + boss.w / 2, ground, stages[stage].accent, 18);
+          shakeTimer = 6;
+          if (Math.abs(d) < 220 && player.y + player.h >= ground - 14) {
+            hurt(boss.damage);
+          }
+        } else {
+          // Blood Demon Art burst
+          for (let i = 0; i < 10; i++) {
+            puff(boss.x + (Math.random() - 0.5) * 110, ground - 28, stages[stage].accent, 1);
+          }
+          if (Math.abs(d) < 270) hurt(Math.max(1, boss.damage - 1));
+        }
+      }
+      if (Math.abs(player.x - boss.x) < 36 && Math.abs(player.y - boss.y) < 55 && Math.random() < 0.03) {
+        hurt(boss.damage);
+      }
+    }
+
+    // Pickups (dropped coins & hearts)
+    pickups = pickups.filter(p => p.life > 0);
+    for (const p of pickups) {
+      p.life -= step;
+      p.vy += 0.28 * step;
+      p.y += p.vy * step;
+      if (p.y >= ground - 14) { p.y = ground - 14; p.vy = 0; }
+      if (Math.abs(player.x + 12 - p.x) < 26 && Math.abs(player.y + 20 - p.y) < 32) {
+        p.life = 0;
+        sfx.coin();
+        if (p.type === 'heart') {
+          const heal = Math.min(5, player.maxHp - player.hp);
+          player.hp += heal;
+          addFloatText(p.x, p.y - 10, heal > 0 ? `+${heal} HP` : '+5 COINS', '#7dffb3');
+          if (heal === 0) coins += 5;
+        } else {
+          coins += 5;
+          addFloatText(p.x, p.y - 10, '+5 🪙', '#ffd166');
+        }
+      }
+    }
+
+    // Travel to next stage
+    if (!boss?.alive && player.x > 855 && stage < 3) {
+      stage++;
+      player.x = 35;
+      player.y = ground - player.h;
+      camera = 0;
+      loadStage();
+      sfx.checkpoint();
+      say(`Entering ${stages[stage].name}. Reach the blue lantern to activate your checkpoint!`);
+    }
+
+    // Checkpoint trigger at x=160
+    if (player.x > 135 && player.x < 190 && !checkpointSaved) {
+      checkpointSaved = true;
+      sfx.checkpoint();
+      puff(160, ground - 30, '#4bd5ff', 14);
+      say('Checkpoint saved! If your HP hits 0, this lantern will revive you once.');
+    }
+
+    // Particles & Floating Texts
+    particles = particles.filter(p => p.life > 0);
+    for (const p of particles) {
+      p.x += p.vx * step;
+      p.y += p.vy * step;
+      p.vy += 0.12 * step;
+      p.life -= step;
+    }
+
+    floatingTexts = floatingTexts.filter(ft => ft.life > 0);
+    for (const ft of floatingTexts) {
+      ft.y -= 0.65 * step;
+      ft.life -= step;
+    }
+
+    updateHUD();
+  }
+
+  function rect(x, y, w, h, col) {
+    ctx.fillStyle = col;
+    ctx.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h));
+  }
+
+  function drawPixelPerson(x, y, body, head = '#f1c4a0', facing = 1, scale = 1, sword = true) {
+    x = Math.round(x); y = Math.round(y);
+    rect(x - 3, y + 39 * scale, 29 * scale, 4 * scale, '#02061088');
+    rect(x + 5 * scale, y + 27 * scale, 6 * scale, 13 * scale, '#17253d');
+    rect(x + 16 * scale, y + 27 * scale, 6 * scale, 13 * scale, '#17253d');
+    rect(x + 3 * scale, y + 37 * scale, 9 * scale, 4 * scale, '#0b1527');
+    rect(x + 15 * scale, y + 37 * scale, 10 * scale, 4 * scale, '#0b1527');
+    rect(x + 4 * scale, y + 12 * scale, 19 * scale, 18 * scale, body);
+    rect(x + 1 * scale, y + 15 * scale, 6 * scale, 14 * scale, body);
+    rect(x + 10 * scale, y + 13 * scale, 4 * scale, 16 * scale, '#101b30');
+    rect(x + 6 * scale, y + 1 * scale, 16 * scale, 14 * scale, head);
+    rect(x + 4 * scale, y, 18 * scale, 5 * scale, '#171a2b');
+    rect(x + 4 * scale, y + 3 * scale, 4 * scale, 7 * scale, '#171a2b');
+    rect(x + 18 * scale, y + 3 * scale, 5 * scale, 7 * scale, '#171a2b');
+    rect(x + (facing === 1 ? 17 : 8) * scale, y + 6 * scale, 2 * scale, 2 * scale, '#111827');
+
+    if (sword) {
+      ctx.save();
+      ctx.translate(x + 14 * scale, y + 23 * scale);
+      ctx.scale(facing, 1);
+      ctx.rotate(slashTimer > 0 ? 0.55 : -0.6);
+      rect(0, 0, 3 * scale, 20 * scale, '#b9e8ff');
+      rect(-1 * scale, -2 * scale, 5 * scale, 4 * scale, '#f4c96a');
+      ctx.restore();
+    }
+  }
+
+  function drawDemon(e) {
+    const x = e.x - camera, y = e.y;
+    const isHit = e.flash > 0;
+    rect(x + 3, y + e.h - 3, e.w - 5, 4, '#02061099');
+    rect(x + 4, y + 12, e.w - 8, e.h - 15, isHit ? '#ffffff' : (e.kind === 'swift' ? '#2c4c6e' : '#57203c'));
+    rect(x + 1, y + 16, 7, 13, isHit ? '#ffffff' : '#7e3154');
+    rect(x + e.w - 8, y + 16, 7, 13, isHit ? '#ffffff' : '#7e3154');
+    rect(x + 5, y + 2, e.w - 10, 14, isHit ? '#ffffff' : '#b77cba');
+    rect(x + 3, y, e.w - 6, 5, '#30192f');
+    rect(x + 8, y + 7, 4, 3, '#ff466e');
+    rect(x + e.w - 12, y + 7, 4, 3, '#ff466e');
+    rect(x + 7, y + e.h - 7, 6, 7, '#24192d');
+    rect(x + e.w - 13, y + e.h - 7, 6, 7, '#24192d');
+    // HP bar
+    rect(x - 4, y - 10, e.w + 8, 4, '#101a2c');
+    rect(x - 4, y - 10, (e.w + 8) * Math.max(0, e.hp / e.max), 4, '#ff477a');
+  }
+
+  function drawBoss(b) {
+    const x = b.x - camera, y = b.y, s = stages[stage];
+    const isHit = b.flash > 0;
+    // Attack warning aura
+    if (b.telegraph > 0) {
+      ctx.strokeStyle = s.accent;
+      ctx.lineWidth = 2;
+      ctx.strokeRect(x - 6, y - 6, b.w + 12, b.h + 10);
+    }
+    rect(x + 4, y + b.h - 4, b.w - 8, 5, '#020610aa');
+    rect(x + 5, y + 20, b.w - 10, b.h - 23, isHit ? '#fff' : (stage === 3 ? '#1c1725' : stage === 2 ? '#5b6c85' : '#52304f'));
+    rect(x + 1, y + 23, 10, 22, isHit ? '#fff' : (stage === 0 ? '#7d4b4c' : '#47283f'));
+    rect(x + b.w - 11, y + 23, 10, 22, isHit ? '#fff' : (stage === 0 ? '#7d4b4c' : '#47283f'));
+    rect(x + 8, y + 3, b.w - 16, 20, isHit ? '#fff' : (stage === 3 ? '#181322' : '#9d7b9c'));
+    rect(x + 5, y, b.w - 10, 8, stage === 3 ? '#090d18' : '#35233f');
+    rect(x + 10, y + 10, 5, 4, '#ff375f');
+    rect(x + b.w - 15, y + 10, 5, 4, '#ff375f');
+    if (stage === 0) { rect(x + 2, y + 27, 7, 13, '#b78b75'); rect(x + b.w - 9, y + 27, 7, 13, '#b78b75'); }
+    if (stage === 1) { rect(x - 4, y + 39, 8, 3, '#d7d1e8'); rect(x + b.w - 4, y + 39, 8, 3, '#d7d1e8'); }
+    if (stage === 3) { rect(x + 12, y - 5, 5, 8, '#ff5378'); rect(x + b.w - 17, y - 5, 5, 8, '#ff5378'); }
+  }
+
+  function draw() {
+    const s = stages[stage];
+    ctx.save();
+    if (shakeTimer > 0) {
+      ctx.translate((Math.random() - 0.5) * 6, (Math.random() - 0.5) * 6);
+    }
+
+    ctx.clearRect(0, 0, W, H);
+    const grad = ctx.createLinearGradient(0, 0, 0, H);
+    grad.addColorStop(0, s.sky);
+    grad.addColorStop(1, '#050b18');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+
+    // Stars
+    for (let i = 0; i < 70; i++) {
+      let x = ((i * 137 + 37 - camera * 0.12) % W + W) % W;
+      let y = (i * 53) % 270;
+      rect(x, y, i % 5 === 0 ? 3 : 2, 2, i % 4 === 0 ? '#b8e7ff' : '#8aa9d0');
+    }
+
+    // Moon
+    ctx.fillStyle = s.moon;
+    ctx.beginPath(); ctx.arc(760 - camera * 0.08, 88, 38, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = s.sky;
+    ctx.beginPath(); ctx.arc(775 - camera * 0.08, 75, 34, 0, Math.PI * 2); ctx.fill();
+
+    // Mountains
+    for (let i = 0; i < 9; i++) {
+      let x = i * 150 - camera * 0.22;
+      ctx.fillStyle = i % 2 ? '#0d1c38' : '#102441';
+      ctx.beginPath(); ctx.moveTo(x, 320); ctx.lineTo(x + 75, 150 + (i % 3) * 25); ctx.lineTo(x + 150, 320); ctx.fill();
+    }
+
+    // Trees
+    for (let i = 0; i < 12; i++) {
+      let x = i * 100 - camera * 0.45;
+      rect(x + 22, 245, 8, 115, s.trees);
+      rect(x + 5, 220, 42, 45, s.trees);
+      rect(x + 12, 195, 28, 45, s.trees);
+      rect(x + 18, 175, 16, 35, s.trees);
+    }
+
+    // Lanterns
+    for (let i = 0; i < 9; i++) {
+      let x = i * 130 + 40 - camera * 0.7;
+      rect(x, 350, 4, 54, '#4a3b3e');
+      rect(x - 5, 344, 14, 15, '#ffbd68');
+      rect(x - 2, 347, 8, 9, '#fff1a8');
+    }
+
+    // Ground
+    rect(0, ground, W, H - ground, s.ground);
+    rect(0, ground, W, 5, '#58778a');
+    for (let i = 0; i < 40; i++) {
+      rect(i * 29 - camera % 29, ground + 14, 13, 3, '#344858');
+      rect(i * 37 - camera % 37, ground + 43, 19, 3, '#0b1728');
+    }
+
+    // Torii gate
+    const tx = 520 - camera;
+    rect(tx, 310, 8, 122, '#612e48');
+    rect(tx + 95, 310, 8, 122, '#612e48');
+    rect(tx - 12, 306, 127, 8, '#9b405d');
+    rect(tx - 5, 294, 113, 8, '#9b405d');
+    rect(tx + 15, 286, 63, 6, '#9b405d');
+
+    // Checkpoint Lantern
+    const cx = 160 - camera;
+    ctx.globalAlpha = checkpointSaved ? 0.95 : 0.45 + Math.sin(Date.now() / 220) * 0.25;
+    rect(cx, ground - 48, 4, 48, '#4bd5ff');
+    rect(cx - 10, ground - 54, 24, 9, '#7deaff');
+    rect(cx - 5, ground - 60, 14, 7, '#c3f7ff');
+    ctx.globalAlpha = 1;
+
+    if (checkpointSaved) {
+      rect(15, 12, 225, 26, '#071326cc');
+      ctx.fillStyle = '#a7f2ff';
+      ctx.font = 'bold 13px monospace';
+      ctx.fillText('✓ BLUE LANTERN ACTIVE', 24, 30);
+    }
+
+    // Pickups
+    for (const p of pickups) {
+      const px = p.x - camera, py = p.y + Math.sin(Date.now() / 160) * 3;
+      if (p.type === 'heart') {
+        rect(px - 5, py - 5, 10, 10, '#ff4d79');
+        rect(px - 3, py - 3, 4, 4, '#ffb3c6');
+      } else {
+        rect(px - 4, py - 4, 9, 9, '#ffd166');
+        rect(px - 2, py - 2, 4, 4, '#fff3b0');
+      }
+    }
+
+    // Enemies & Boss
+    enemies.forEach(e => { if (e.alive) drawDemon(e); });
+    if (boss?.alive) drawBoss(boss);
+
+    // Friends
+    friends.forEach((f, i) => {
+      drawPixelPerson(f.x - camera, ground - 33, f.color, i === 0 ? '#e4b1c8' : '#f4b66c', player.facing, 0.78, true);
+    });
+
+    // Player
+    if (player.invuln <= 0 || Math.floor(player.invuln / 4) % 2 === 0) {
+      drawPixelPerson(player.x - camera, player.y, '#1e8c79', '#d5a28c', player.facing, 1, true);
+    }
+
+    // Water Breathing Sword Slash Arc
+    if (slashTimer > 0) {
+      const isFinisher = comboStep === 3;
+      ctx.strokeStyle = isFinisher ? '#ffffff' : '#c8f5ff';
+      ctx.lineWidth = isFinisher ? 7 : 5;
+      ctx.beginPath();
+      const sx = player.x - camera + 13 + player.facing * 15;
+      const sy = player.y + 22;
+      const radius = isFinisher ? 48 : 38;
+      ctx.arc(sx, sy, radius, player.facing === 1 ? -0.95 : Math.PI - 0.95, player.facing === 1 ? 0.85 : Math.PI + 0.85, player.facing < 0);
+      ctx.stroke();
+      ctx.strokeStyle = isFinisher ? '#38d9ff' : '#62dfff';
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+    }
+
+    // Dash streak
+    if (dashTimer > 0) {
+      for (let i = 0; i < 4; i++) {
+        rect(player.x - camera - player.facing * i * 13, player.y + 18 + (i % 2) * 5, 12, 3, '#61dfff');
+      }
+    }
+
+    // Particles
+    for (const p of particles) {
+      ctx.globalAlpha = Math.max(0, p.life / 28);
+      rect(p.x - camera, p.y, 4, 4, p.color);
+    }
+    ctx.globalAlpha = 1;
+
+    // Floating Damage / Pickup Numbers
+    ctx.font = 'bold 14px monospace';
+    ctx.textAlign = 'center';
+    for (const ft of floatingTexts) {
+      ctx.globalAlpha = Math.min(1, ft.life / 20);
+      ctx.fillStyle = ft.color;
+      ctx.fillText(ft.text, ft.x - camera, ft.y);
+    }
+    ctx.globalAlpha = 1;
+    ctx.textAlign = 'left';
+
+    // Stage Banner
+    rect(12, 478, 360, 42, '#030a16cc');
+    ctx.fillStyle = '#e5f2ff';
+    ctx.font = 'bold 15px monospace';
+    ctx.fillText(s.name.toUpperCase(), 23, 497);
+    ctx.font = '12px monospace';
+    ctx.fillStyle = '#a9c5e8';
+    ctx.fillText(boss?.alive ? 'DEMONS AHEAD  •  STAY ALERT' : 'PATH CLEAR  •  WALK RIGHT TO ADVANCE →', 23, 513);
+
+    // Top Boss Health Bar
+    if (boss?.alive) {
+      const bw = 340, bx = (W - bw) / 2;
+      rect(bx - 3, 34, bw + 6, 12, '#070d1c');
+      rect(bx, 37, bw * Math.max(0, boss.hp / boss.max), 6, s.accent);
+      ctx.fillStyle = '#f7d9ee';
+      ctx.font = 'bold 14px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(`${s.boss.toUpperCase()} (${Math.ceil(boss.hp)}/${boss.max})`, W / 2, 26);
+      ctx.textAlign = 'left';
+    }
+
+    // Pause / Game Over / Victory Overlay
+    if (paused || gameOver || won) {
+      ctx.fillStyle = '#020611cc';
+      ctx.fillRect(0, 0, W, H);
+      ctx.textAlign = 'center';
+      if (paused) {
+        ctx.fillStyle = '#8ee8ff';
+        ctx.font = 'bold 34px monospace';
+        ctx.fillText('GAME PAUSED', W / 2, 235);
+        ctx.fillStyle = '#d6ebff';
+        ctx.font = '16px monospace';
+        ctx.fillText('Press P or click Resume to continue', W / 2, 272);
+      } else {
+        ctx.fillStyle = won ? '#a8ffdc' : '#ff9eb4';
+        ctx.font = 'bold 36px monospace';
+        ctx.fillText(won ? 'DAWN HAS COME' : 'HUNTER DOWN', W / 2, 230);
+        ctx.fillStyle = '#fff';
+        ctx.font = '18px monospace';
+        ctx.fillText(won ? 'You defeated the Demon King! Press Enter to play again' : 'Press Enter or Restart to try again', W / 2, 270);
+      }
+      ctx.textAlign = 'left';
+    }
+
+    ctx.restore();
+  }
+
+  function frame(t) {
+    if (!lastTime) lastTime = t;
+    const dt = t - lastTime;
+    lastTime = t;
+    update(dt);
+    draw();
+    requestAnimationFrame(frame);
+  }
+
+  reset();
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

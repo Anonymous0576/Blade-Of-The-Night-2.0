@@ -1,0 +1,19 @@
+{
+  "name": "blade-of-the-night",
+  "version": "1.0.0",
+  "description": "A moonlit pixel-art demon-hunting adventure web game built with HTML5 Canvas and JavaScript.",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx http-server",
+    "dev": "npx live-server"
+  },
+  "keywords": [
+    "html5-game",
+    "pixel-art",
+    "canvas-game",
+    "browser-game",
+    "demon-slayer"
+  ],
+  "author": "Adarsh Mishra",
+  "license": "MIT"
+}
